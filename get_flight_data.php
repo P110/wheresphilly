@@ -3,6 +3,56 @@ require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 
+// Decide whether or not it's the right time to update
+$process_data = false;
+do {
+    // If we haven't got any flight data, get some
+    $flight_data = file_get_contents(__DIR__ . "/flight_data.json");
+    if (empty($flight_data)) {
+        $process_data = true;
+        break;
+    }
+    $flight_data = json_decode($flight_data, true);
+
+    // If the force flag is set, get some
+    if (!empty($_GET['force'])) {
+        $process_data = true;
+        break;
+    }
+
+    // If we're in an active sector, keep getting data
+    if(!empty($flight_data['active_sector'])) {
+        $process_data = true;
+        break;
+    }
+
+    // If we're close to an expected active sector, start getting data
+    foreach ($flight_data['sectors'] as $sector) {
+        // Get the sector start time
+        $estimated_departure = new DateTime($sector['estimated_out']);
+        $estimated_departure = $estimated_departure->getTimestamp();
+
+        // If we're <= 15 minutes out, start getting data
+        if (time() > $estimated_departure - (60*15)) {
+            $process_data = true;
+            break;
+        }
+    }
+
+    // If it's the top of the hour, get an update
+    if (date("i") == 0) {
+        $process_data = true;
+        break;
+    }
+
+}while(false);
+
+// We're not processing data now
+if ($process_data === false) { echo "Not grabbing data right now...";die(); }
+
+
+// /////////////////////////////////////////////////////////////////
+
 // Get config
 $config = file_get_contents(__DIR__ . "/.config/config.json");
 $config = json_decode($config, true);
