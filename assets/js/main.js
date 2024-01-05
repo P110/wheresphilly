@@ -443,6 +443,9 @@ function resolve_status(sector) {
         case "Scheduled":
             return {"colour": "blue", "text": "Scheduled"};
 
+        case "Taxiing":
+            return {"colour": "green", "text": sector_status};
+
         case "On The Way!":
             return {"colour": "green", "text": "En Route"};
 
