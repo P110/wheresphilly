@@ -146,7 +146,7 @@ function draw_active_sector(sector) {
             zoom = 8;
         }
 
-        if (sector['info']['progress_percent'] < 5 || sector['info']['progress_percent'] > 95) {
+        if (sector['info']['progress_percent'] < 2 || sector['info']['progress_percent'] > 95) {
             zoom = 12;
         }
 
