@@ -136,8 +136,8 @@ function draw_active_sector(sector) {
         el.className = "map_marker";
         el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
         el.style.backgroundSize = "cover";
-        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['track'].splice(-1)[0]['heading']})
-            .setLngLat(coordinates.splice(-1)[0])
+        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['track'].slice(-1)[0]['heading']})
+            .setLngLat(coordinates.slice(-1)[0])
             .addTo(map)
             .togglePopup();
 
@@ -190,9 +190,9 @@ function draw_active_sector(sector) {
     let speed = "0";
     let heading = "???";
     if (sector['track'].length > 0) {
-        altitude = sector['track'].splice(-1)[0]['altitude'] * 100;
-        speed = sector['track'].splice(-1)[0]['groundspeed'];
-        heading = sector['track'].splice(-1)[0]['heading'];
+        altitude = sector['track'].slice(-1)[0]['altitude'] * 100;
+        speed = sector['track'].slice(-1)[0]['groundspeed'];
+        heading = sector['track'].slice(-1)[0]['heading'];
     }
 
     // Create the active sector card
