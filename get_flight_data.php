@@ -182,7 +182,7 @@ foreach ($todaysSectors as $key => $sector)
 
     // Enrich with FlightAware info
     $todaysSectors[$key]['info'] = $sectorInfo;
-    $todaysSectors[$key]['info']['progress_percent'] = round($sectorInfo['distance']['elapsed']/$sectorInfo['flightPlan']['directDistance'] * 100);
+    $todaysSectors[$key]['info']['progress_percent'] = 100 - round($sectorInfo['distance']['remaining']/$sectorInfo['flightPlan']['directDistance'] * 100);
     $todaysSectors[$key]['track'] = $sectorInfo['track'];
 
     // Check if this sector is active
