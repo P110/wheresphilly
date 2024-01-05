@@ -80,81 +80,85 @@ function draw_active_sector(sector) {
         return;
     }
 
-    // Create the track
-    let coordinates = [];
-    sector['track'].forEach((track) => {
-        coordinates.push([track['longitude'], track['latitude']]);
-    });
+    if (sector['track'].length > 0) {
 
-    // Draw the track
-    if (map.getSource('track') === undefined) {
-        map.addSource('track', {
-            'type': 'geojson',
-            'data': {
+        // Create the track
+        let coordinates = [];
+        sector['track'].forEach((track) => {
+            coordinates.push([track['longitude'], track['latitude']]);
+        });
+
+        // Draw the track
+        if (map.getSource('track') === undefined) {
+            map.addSource('track', {
+                'type': 'geojson',
+                'data': {
+                    'type': 'Feature',
+                    'properties': {},
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': coordinates
+                    }
+                }
+            });
+            map.addLayer({
+                'id': 'track',
+                'type': 'line',
+                'source': 'track',
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#42e5ff',
+                    'line-width': 3
+                }
+            });
+        } else {
+            map.getSource('track').setData({
                 'type': 'Feature',
                 'properties': {},
                 'geometry': {
                     'type': 'LineString',
                     'coordinates': coordinates
                 }
-            }
+            });
+        }
+
+        // Remove marker
+        if (map_marker !== null) {
+            map_marker.remove();
+            map_marker = null;
+        }
+
+        // Add the marker for the aircraft
+        let el = document.createElement('div');
+        el.className = "map_marker";
+        el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
+        el.style.backgroundSize = "cover";
+        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['track'].splice(-1)[0]['heading']})
+            .setLngLat(coordinates.splice(-1)[0])
+            .addTo(map)
+            .togglePopup();
+
+        let zoom = 5;
+        if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 80) {
+            zoom = 8;
+        }
+
+        if (sector['info']['progress_percent'] < 5 || sector['info']['progress_percent'] > 95) {
+            zoom = 12;
+        }
+
+        // Centre around the latest point
+        console.log(coordinates.slice(-1)[0]);
+        map.flyTo({
+            center: coordinates.slice(-1)[0],
+            zoom: zoom,
+            speed: 0.5,
         });
-        map.addLayer({
-            'id': 'track',
-            'type': 'line',
-            'source': 'track',
-            'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            'paint': {
-                'line-color': '#42e5ff',
-                'line-width': 3
-            }
-        });
-    } else {
-        map.getSource('track').setData({
-            'type': 'Feature',
-            'properties': {},
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': coordinates
-            }
-        });
+
     }
-
-    // Remove marker
-    if (map_marker !== null){
-        map_marker.remove();
-        map_marker = null;
-    }
-
-    // Add the marker for the aircraft
-    let el = document.createElement('div');
-    el.className = "map_marker";
-    el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
-    el.style.backgroundSize = "cover";
-    map_marker = new mapboxgl.Marker({"element": el, rotation: sector['track'].splice(-1)[0]['heading']})
-        .setLngLat(coordinates.splice(-1)[0])
-        .addTo(map)
-        .togglePopup();
-
-    let zoom = 5;
-    if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 80) {
-        zoom = 8;
-    }
-
-    if (sector['info']['progress_percent'] < 5 || sector['info']['progress_percent'] > 95) {
-        zoom = 12;
-    }
-
-    // Centre around the latest point
-    console.log(coordinates.slice(-1)[0]);
-    map.flyTo({
-        center: coordinates.slice(-1)[0],
-        zoom: zoom,
-        speed: 0.5,
-    });
 
     // //////////////////////////////////////////////////////////////////
 
@@ -180,6 +184,15 @@ function draw_active_sector(sector) {
         arrival_delay_string += ` <span class="green">(-${Math.round((arrival_delay * -1) / 60)} mins)</span>`
     } else {
         arrival_delay_string += ` <span class="green">On Time</span>`
+    }
+
+    let altitude = "0";
+    let speed = "0";
+    let heading = "???";
+    if (sector['track'].length > 0) {
+        altitude = sector['track'].splice(-1)[0]['altitude'] * 100;
+        speed = sector['track'].splice(-1)[0]['groundspeed'];
+        heading = sector['track'].splice(-1)[0]['heading'];
     }
 
     // Create the active sector card
@@ -224,19 +237,19 @@ function draw_active_sector(sector) {
                 <div class="statbox">
                     <span style="font-weight:bold;font-family:'Overpass Mono', sans-serif;">ALTITUDE</span>
                     <br/>
-                    ${sector['track'].splice(-1)[0]['altitude'] * 100} ft
+                    ${altitude} ft
                 </div>
 
                 <div class="statbox">
                     <span style="font-weight:bold;font-family:'Overpass Mono', sans-serif;">GNDSPEED</span>
                     <br/>
-                    ${sector['track'].splice(-1)[0]['groundspeed']} kts
+                    ${speed} kts
                 </div>
 
                 <div class="statbox">
                     <span style="font-weight:bold;font-family:'Overpass Mono', sans-serif;">HEADING</span>
                     <br/>
-                    ${sector['track'].splice(-1)[0]['heading']}°
+                    ${heading}°
                 </div>
             </div>
 
