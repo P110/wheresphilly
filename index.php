@@ -1,4 +1,4 @@
-<?php const WP_VERSION = 0.008; ?>
+<?php const WP_VERSION = 0.009; ?>
 
 <!DOCTYPE html>
 <html lang="eng">
