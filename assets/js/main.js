@@ -85,7 +85,7 @@ function draw_active_sector(sector) {
         // Create the track
         let coordinates = [];
         sector['track'].forEach((track) => {
-            coordinates.push([track['longitude'], track['latitude']]);
+            coordinates.push(track['coord']);
         });
 
         // Draw the track
@@ -136,7 +136,7 @@ function draw_active_sector(sector) {
         el.className = "map_marker";
         el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
         el.style.backgroundSize = "cover";
-        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['track'].slice(-1)[0]['heading']})
+        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['info']['heading']})
             .setLngLat(coordinates.slice(-1)[0])
             .addTo(map)
             .togglePopup();
@@ -162,9 +162,13 @@ function draw_active_sector(sector) {
 
     // //////////////////////////////////////////////////////////////////
 
+
     // Handle Departure
-    let departure = new Date(sector['info']['actual_out']);
-    let departure_delay = sector['info']['departure_delay'];
+    let departure = new Date(sector['info']['gateDepartureTimes']['actual'] * 1000);
+    let departure_delay = sector['info']['gateDepartureTimes']['estimated'] - sector['info']['gateDepartureTimes']['scheduled'];
+    if (sector['info']['gateDepartureTimes']['actual'] !== null) {
+        departure_delay = sector['info']['gateDepartureTimes']['actual'] - sector['info']['gateDepartureTimes']['scheduled'];
+    }
     let departure_delay_string = "";
     if (departure_delay >= 60) {
         departure_delay_string += ` <span class="red">(+${Math.round(departure_delay / 60)} mins)</span>`
@@ -175,8 +179,11 @@ function draw_active_sector(sector) {
     }
 
     // Handle Arrival
-    let arrival = new Date(sector['info']['estimated_in']);
-    let arrival_delay = sector['info']['arrival_delay'];
+    let arrival = new Date(sector['info']['gateDepartureTimes']['estimated'] * 1000);
+    let arrival_delay = sector['info']['gateArrivalTimes']['estimated'] - sector['info']['gateArrivalTimes']['scheduled'];
+    if (sector['info']['gateArrivalTimes']['actual'] !== null) {
+        arrival_delay = sector['info']['gateArrivalTimes']['actual'] - sector['info']['gateArrivalTimes']['scheduled'];
+    }
     let arrival_delay_string = "";
     if (arrival_delay >= 60) {
         arrival_delay_string += ` <span class="red">(+${Math.round(arrival_delay / 60)} mins)</span>`
@@ -190,9 +197,9 @@ function draw_active_sector(sector) {
     let speed = "0";
     let heading = "???";
     if (sector['track'].length > 0) {
-        altitude = sector['track'].slice(-1)[0]['altitude'] * 100;
-        speed = sector['track'].slice(-1)[0]['groundspeed'];
-        heading = sector['track'].slice(-1)[0]['heading'];
+        altitude = sector['track'].slice(-1)[0]['alt'] * 100;
+        speed = sector['track'].slice(-1)[0]['gs'];
+        heading = sector['info']['heading'];
     }
 
     // Create the active sector card
@@ -277,17 +284,23 @@ function summary_create_block(sector) {
     if ('info' in sector){
         // Time blocks
         let departure;
-        let departure_delay = sector['info']['departure_delay'];
+        let departure_delay = sector['info']['gateDepartureTimes']['estimated'] - sector['info']['gateDepartureTimes']['scheduled'];
+        if (sector['info']['gateDepartureTimes']['actual'] !== null) {
+            departure_delay = sector['info']['gateDepartureTimes']['actual'] - sector['info']['gateDepartureTimes']['scheduled'];
+        }
         let arrival;
-        let arrival_delay = sector['info']['arrival_delay'];
+        let arrival_delay = sector['info']['gateArrivalTimes']['estimated'] - sector['info']['gateArrivalTimes']['scheduled'];
+        if (sector['info']['gateArrivalTimes']['actual'] !== null) {
+            arrival_delay = sector['info']['gateArrivalTimes']['actual'] - sector['info']['gateArrivalTimes']['scheduled'];
+        }
         let time_strings = "";
 
         // Handle Departure
-        if (sector['info']['actual_out'] === null) {
-            departure = new Date(sector['info']['estimated_out']);
+        if (sector['info']['gateDepartureTimes']['actual'] === null) {
+            departure = new Date(sector['info']['gateDepartureTimes']['estimated'] * 1000);
             time_strings += "Estimated Departure: ";
         } else {
-            departure = new Date(sector['info']['actual_out']);
+            departure = new Date(sector['info']['gateDepartureTimes']['actual'] * 1000);
             time_strings += "Actual Departure: ";
         }
         time_strings += `${departure.getHours()}:${departure.getMinutes().toString().padStart(2, "0")}`;
@@ -298,13 +311,13 @@ function summary_create_block(sector) {
         }
 
         // Handle Arrival (only if actually departed)
-        if (sector['info']['actual_out'] !== null) {
+        if (sector['info']['gateArrivalTimes']['actual'] !== null) {
             time_strings += "<br/>";
-            if (sector['info']['actual_in'] === null) {
-                arrival = new Date(sector['info']['estimated_in']);
+            if (sector['info']['gateArrivalTimes']['actual'] === null) {
+                arrival = new Date(sector['info']['gateArrivalTimes']['estimated']);
                 time_strings += "Estimated Arrival: ";
             } else {
-                arrival = new Date(sector['info']['actual_in']);
+                arrival = new Date(sector['info']['gateArrivalTimes']['actual']);
                 time_strings += "Actual Arrival: ";
             }
             time_strings += `${arrival.getHours()}:${arrival.getMinutes().toString().padStart(2, "0")}`;
@@ -347,84 +360,6 @@ function map_zoom() {
     map.fitBounds(bounds, {padding: 90, maxZoom: 9});
 }
 
-function map_clear(){
-    // Iterate over mappedParcels to clear layer & source
-    mappedParcels.forEach((parcel_barcode) => {
-        map.removeLayer(parcel_barcode);
-        map.removeSource(parcel_barcode);
-    });
-
-    // Clear markers
-    for (let i = mapMarkers.length - 1; i >= 0; i--) {
-        mapMarkers[i].remove();
-    }
-    mapMarkers = {};
-
-    // Clear mappedParcels & boundCoordinates
-    mappedParcels = [];
-    boundCoords = [];
-}
-
-function draw_parcel(parcel) {
-    // Get the coordinates for the line
-    let lastLocation = null;
-    let locations = [];
-    parcel['EVENTS'].forEach((event) => {
-        let location = event['location'];
-        if (location !== null && location !== lastLocation) {
-            locations.push([location['lng'], location['lat']]);
-            lastLocation = location;
-        }
-    });
-
-    // If this parcel actually has any locations, draw them
-    if (lastLocation !== null) {
-        // Add to mapped parcels
-        mappedParcels.push(parcel['BARCODE']);
-        boundCoords.push([lastLocation['lng'], lastLocation['lat']]);
-
-        // Add the marker for the parcel
-        let el = document.createElement('div');
-        el.className = "map_marker";
-        el.style.backgroundImage = 'url(' + parcel['IMAGE'] + ')';
-        el.style.backgroundSize = "cover";
-        el.style.borderColor = resolve_status_colour(resolve_status(parcel)['colour']);
-        mapMarkers[parcel['BARCODE']] = new mapboxgl.Marker({"element": el})
-            .setLngLat([lastLocation['lng'], lastLocation['lat']])
-            .setPopup(new mapboxgl.Popup({closeOnClick: false, closeButton: false, offset: -60})
-                .setText((parcel['NAME'] === null) ? parcel['BARCODE'] : parcel['NAME'])
-            )
-            .addTo(map)
-            .togglePopup();
-
-        // Add the source and the layer for the map line
-        map.addSource(parcel['BARCODE'], {
-            'type': 'geojson',
-            'data': {
-                'type': 'Feature',
-                'properties': {},
-                'geometry': {
-                    'type': 'LineString',
-                    'coordinates': locations
-                }
-            }
-        });
-        map.addLayer({
-            'id': parcel['BARCODE'],
-            'type': 'line',
-            'source': parcel['BARCODE'],
-            'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            'paint': {
-                'line-color': resolve_status_colour(resolve_status(parcel)['colour']),
-                'line-width': 4
-            }
-        });
-    }
-}
-
 /**
  * Parses the sector status into the colour & text to display
  * @param sector information
@@ -436,23 +371,23 @@ function resolve_status(sector) {
     if (!('info' in sector)){
         sector_status = "Upcoming";
     } else {
-        sector_status = sector['info']['status'];
+        sector_status = sector['info']['flightStatus'];
     }
 
-    switch (sector_status.split(" / ")[0]) {
+    switch (sector_status) {
         case "Scheduled":
             return {"colour": "blue", "text": "Scheduled"};
 
-        case "Taxiing":
+        case "taxiing":
             return {"colour": "green", "text": sector_status};
 
-        case "On The Way!":
+        case "airborne":
             return {"colour": "green", "text": "En Route"};
 
-        case "Landed":
+        case "landed":
             return {"colour": "green", "text": sector_status};
 
-        case "Arrived":
+        case "arrived":
             return {"colour": "green", "text": "Arrived"};
 
         default:

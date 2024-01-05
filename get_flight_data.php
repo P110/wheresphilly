@@ -171,60 +171,38 @@ foreach ($todaysSectors as $key => $sector)
         break;
     }
 
-    $url = "https://aeroapi.flightaware.com/aeroapi/flights/{$sector['code']}?start={$today->format("Y-m-d")}&end={$today->format("Y-m-d")}T23%3A59%3A59Z";
-    $headers = [
-        'Accept: application/json; charset=UTF-8',
-        'x-apikey: ' . $config['fa_apikey'],
-    ];
+    $raw_data = file_get_contents("https://www.flightaware.com/live/flight/{$sector['code']}");
+    if ($raw_data === false) { throw new Exception("Error querying status for sector code: {$sector['code']}"); }
 
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $url);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-    $response = curl_exec($curl);
+    // Parse out the JSON blob
+    preg_match("/var trackpollBootstrap = (.*)?;/", $raw_data, $sectorInfo);
+    $sectorInfo = json_decode($sectorInfo[1], true);
+    $sectorInfo = $sectorInfo['flights'];
+    $sectorInfo = $sectorInfo[array_keys($sectorInfo)[0]];
 
-    if ($response === false) { throw new Exception("Error querying status for sector code: {$sector['code']}"); }
-    curl_close($curl);
-
-    // TODO: If this flight has passed - remove it from active sectors
-
-    // Enrich the sector with FlightAware info
-    $sectorInfo = json_decode($response, true)['flights'][0];
+    // Enrich with FlightAware info
     $todaysSectors[$key]['info'] = $sectorInfo;
+    $todaysSectors[$key]['info']['progress_percent'] = round($sectorInfo['distance']['elapsed']/$sectorInfo['flightPlan']['directDistance'] * 100);
+    $todaysSectors[$key]['track'] = $sectorInfo['track'];
+
+    // Check if this sector is active
     $todaysSectors[$key]['active'] = false;
-    if (!empty($sectorInfo['actual_out']) && empty($sectorInfo['actual_in']))
+    if (!empty($sectorInfo['gateDepartureTimes']['actual']) && empty($sectorInfo['gateArrivalTimes']['actual']))
     {
+        // Set active sector
         $todaysSectors[$key]['active'] = true;
         $activeSector = $todaysSectors[$key];
+
+        // Check if we have aircraft data, if not, use a default photo
+        $aircraftData = json_decode(file_get_contents(__DIR__ . "/aircraft_data.json"), true);
+        if(!empty($aircraftData[$sector['code']])) {
+            // Query jetphotos to get images for this regisrtration
+            $photo_html = file_get_contents("https://www.jetphotos.com/registration/{$aircraftData[$sector['code']]}");
+            $photos = [''];
+            preg_match("/\"(\/\/cdn.jetphotos.com\/.*?)\"/", $photo_html, $photos);
+            $activeSector['photo'] = $photos[1];
+        } else { $activeSector['photo'] = "./assets/img/philly.jpg"; }
     }
-}
-
-// Pull track for current active sector
-if (!empty($activeSector))
-{
-    $url = "https://aeroapi.flightaware.com/aeroapi/flights/{$activeSector['info']['fa_flight_id']}/track";
-    $headers = [
-        'Accept: application/json; charset=UTF-8',
-        'x-apikey: ' . $config['fa_apikey'],
-    ];
-
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $url);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-    $response = curl_exec($curl);
-
-    if ($response === false) { throw new Exception("Error querying track for sector code: {$sector['code']}"); }
-    curl_close($curl);
-
-    // Add the track for the active sector
-    $activeSector['track'] = json_decode($response, true)['positions'];
-
-    // Query jetphotos to get images for this regisrtration
-    $photo_html = file_get_contents("https://www.jetphotos.com/registration/{$activeSector['info']['registration']}");
-    $photos = [''];
-    preg_match("/\"(\/\/cdn.jetphotos.com\/.*?)\"/", $photo_html, $photos);
-    $activeSector['photo'] = $photos[1];
 }
 
 // Get the up next flight data
