@@ -183,7 +183,7 @@ function draw_active_sector(sector) {
     }
 
     // Handle Arrival
-    let arrival = new Date(sector['info']['gateDepartureTimes']['estimated'] * 1000);
+    let arrival = new Date(sector['info']['gateArrivalTimes']['estimated'] * 1000);
     let arrival_delay = sector['info']['gateArrivalTimes']['estimated'] - sector['info']['gateArrivalTimes']['scheduled'];
     if (sector['info']['gateArrivalTimes']['actual'] !== null) {
         arrival_delay = sector['info']['gateArrivalTimes']['actual'] - sector['info']['gateArrivalTimes']['scheduled'];
