@@ -212,7 +212,8 @@ $upNext = $flightData[$lowestDateKey];
 $returnData = [
     "sectors" => $todaysSectors,
     "active_sector" => $activeSector,
-    "up_next" => $upNext
+    "up_next" => $upNext,
+    "lastUpdate" => time()
 ];
 header("content-type:Application/json");
 echo json_encode($returnData);

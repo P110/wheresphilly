@@ -8,7 +8,7 @@ let mappedParcels = [];
 let map_marker = null;
 let boundCoords = [];
 
-// Parcel variables
+// Data variables
 let lastUpdate = null;
 
 function initialise() {
@@ -47,6 +47,10 @@ function check_refresh(fade = true){
     $.get(`./flight_data.json?t=${new Date().getTime()}`, (data) => {
         // If there is no data, ignore
         if(data.length === 0) {return;}
+
+        // If there's no update, ignore
+        if (lastUpdate !== null && data['lastUpdate'] === lastUpdate) {return;}
+        lastUpdate = data['lastUpdate'];
 
         // Handle today's sectors
         let today_container = $("#todays_sectors");
@@ -352,14 +356,6 @@ function summary_create_block(sector) {
     </div>`;
 }
 
-function map_zoom() {
-    if(boundCoords === []) {return;}
-    let bounds = boundCoords.reduce(function(bounds, coord) {
-        return bounds.extend(coord);
-    }, new mapboxgl.LngLatBounds(boundCoords[0], boundCoords[0]));
-    map.fitBounds(bounds, {padding: 90, maxZoom: 9});
-}
-
 /**
  * Parses the sector status into the colour & text to display
  * @param sector information
@@ -393,29 +389,4 @@ function resolve_status(sector) {
         default:
             return {"colour": "yellow", "text": sector_status};
     }
-}
-
-function resolve_status_colour(colour) {
-    switch (colour) {
-        case "green":
-            return "#72ff7d";
-
-        case "yellow":
-            return "#ffda72";
-
-        case "blue":
-            return "#42e5ff";
-
-        default:
-            return "#ff4242";
-    }
-}
-
-function add_parcel(barcode, courier, name, postcode) {
-    $.get("addParcel.php?barcode=" + barcode + "&courier=" + courier + "&name=" + name + "&postcode=" + postcode, () => {
-        check_refresh();
-        $('#name').val("");
-        $('#barcode').val("");
-        $('#postcode').val("");
-    });
 }
