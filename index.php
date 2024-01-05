@@ -45,7 +45,7 @@
     <div id="todays_sectors" style="width:100%;display:flex;flex-direction: column;">
     </div>
 
-    <h2 style="font-family:'Varela Round', sans-serif;text-align:center;width:100%;">Next Scheduled Duty</h2>
+    <h2 style="font-family:'Varela Round', sans-serif;text-align:center;width:100%;margin-bottom:0;">Next Scheduled Duty</h2>
     <div id="upNext" style="width:100%;display:flex;flex-direction: column;">
     </div>
 

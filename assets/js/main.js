@@ -61,7 +61,7 @@ function check_refresh(fade = true){
 
         // Handle next scheduled duty
         let upnext_container = $("#upNext");
-        upnext_container.html(summary_create_block(data['up_next']));
+        upnext_container.html(`<div style="text-align: center;margin: 10px auto 5px auto;display: inline-block;background: #2b2b2b;border-radius: 50px;padding: 5px 15px;">${data['up_next']['date']['date'].split(" ")[0]}</div>` + summary_create_block(data['up_next']));
 
         // Handle current sector
         let active_container = $("#active_sector");
