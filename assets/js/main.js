@@ -146,11 +146,11 @@ function draw_active_sector(sector) {
             .togglePopup();
 
         let zoom = 5;
-        if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 80) {
+        if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 90) {
             zoom = 8;
         }
 
-        if (sector['info']['progress_percent'] < 2 || sector['info']['progress_percent'] > 95) {
+        if (sector['info']['progress_percent'] < 2 || sector['info']['progress_percent'] >= 99) {
             zoom = 12;
         }
 
