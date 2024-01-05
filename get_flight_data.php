@@ -33,7 +33,7 @@ do {
         $estimated_departure = $estimated_departure->getTimestamp();
 
         // If we're <= 15 minutes out, start getting data
-        if (time() > $estimated_departure - (60*15)) {
+        if (time() > $estimated_departure - (60*15) && time() < $estimated_departure + (60*15)) {
             $process_data = true;
             break;
         }
