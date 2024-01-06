@@ -178,8 +178,18 @@ foreach ($todaysSectors as $key => $sector)
     if ($raw_data === false) { throw new Exception("Error querying status for sector code: {$sector['code']}"); }
 
     // Parse out the JSON blob
-    preg_match("/var trackpollBootstrap = (.*)?;/", $raw_data, $sectorInfo);
-    $sectorInfo = json_decode($sectorInfo[1], true);
+//    preg_match("/var trackpollBootstrap = (.*)?;/", $raw_data, $sectorInfo);
+//    $sectorInfo = json_decode($sectorInfo[1], true);
+//    $sectorInfo = $sectorInfo['flights'];
+//    $sectorInfo = $sectorInfo[array_keys($sectorInfo)[0]];
+
+    // Parse out the track poll token
+    preg_match("/var trackpollGlobals = {\"TOKEN\":\"(.*)?\",/", $raw_data, $token);
+    $token = $token[1];
+
+    // Get latest trackpoll data
+    $sectorInfo = file_get_contents("https://www.flightaware.com/ajax/trackpoll.rvt?token={$token}");
+    $sectorInfo = json_decode($sectorInfo, true);
     $sectorInfo = $sectorInfo['flights'];
     $sectorInfo = $sectorInfo[array_keys($sectorInfo)[0]];
 
