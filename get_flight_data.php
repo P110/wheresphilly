@@ -33,11 +33,10 @@ do {
     // If we're close to an expected active sector, start getting data
     foreach ($flight_data['sectors'] as $sector) {
         // Get the sector start time
-        $estimated_departure = new DateTime($sector['estimated_out']);
-        $estimated_departure = $estimated_departure->getTimestamp();
+        $estimated_departure = $sector['info']['gateDepartureTimes']['estimated'];
 
         // If we're <= 15 minutes out, start getting data
-        if (time() > $estimated_departure - (60*15) && time() < $estimated_departure + (60*15)) {
+        if (time() > $estimated_departure - (60*15) && time() < $estimated_departure + (60*30)) {
             $process_data = true;
             break;
         }
