@@ -136,21 +136,24 @@ function draw_active_sector(sector) {
         }
 
         // Add the marker for the aircraft
-        let el = document.createElement('div');
-        el.className = "map_marker";
-        el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
-        el.style.backgroundSize = "cover";
-        map_marker = new mapboxgl.Marker({"element": el, rotation: sector['info']['heading']})
-            .setLngLat(coordinates.slice(-1)[0])
-            .addTo(map)
-            .togglePopup();
+        if (sector['info']['heading'] !== null) {
+            let el = document.createElement('div');
+            el.className = "map_marker";
+            el.style.backgroundImage = 'url(./assets/img/aircraft.png)';
+            el.style.backgroundSize = "cover";
+            map_marker = new mapboxgl.Marker({"element": el, rotation: sector['info']['heading']})
+                .setLngLat(coordinates.slice(-1)[0])
+                .addTo(map)
+                .togglePopup();
+        }
 
+        // Zoom depending on completion amount
         let zoom = 5;
         if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 90) {
             zoom = 8;
         }
 
-        if (sector['info']['progress_percent'] < 2 || sector['info']['progress_percent'] >= 99) {
+        if (sector['info']['progress_percent'] < 1 || sector['info']['progress_percent'] >= 98) {
             zoom = 12;
         }
 
