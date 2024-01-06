@@ -3,7 +3,11 @@ require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 
-// Decide whether or not it's the right time to update
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Decide whether it's the right time to update
 $process_data = false;
 do {
     // If we haven't got any flight data, get some
@@ -179,6 +183,10 @@ foreach ($todaysSectors as $key => $sector)
     $sectorInfo = json_decode($sectorInfo[1], true);
     $sectorInfo = $sectorInfo['flights'];
     $sectorInfo = $sectorInfo[array_keys($sectorInfo)[0]];
+
+    // Remove unnecessary keys
+    unset($sectorInfo['activityLog']);
+    unset($sectorInfo['relatedThumbnails']);
 
     // Enrich with FlightAware info
     $todaysSectors[$key]['info'] = $sectorInfo;

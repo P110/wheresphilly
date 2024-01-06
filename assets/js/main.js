@@ -371,6 +371,7 @@ function resolve_status(sector) {
     }
 
     switch (sector_status) {
+        case "":
         case "Scheduled":
             return {"colour": "blue", "text": "Scheduled"};
 
