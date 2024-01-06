@@ -150,11 +150,11 @@ function draw_active_sector(sector) {
 
         // Zoom depending on completion amount
         let zoom = 5;
-        if (sector['info']['progress_percent'] < 15 || sector['info']['progress_percent'] > 90) {
+        if (sector['info']['progress_percent'] < 4 || sector['info']['progress_percent'] > 95) {
             zoom = 8;
         }
 
-        if (sector['info']['progress_percent'] < 1 || sector['info']['progress_percent'] >= 98) {
+        if (sector['info']['progress_percent'] < 1 || sector['info']['progress_percent'] >= 99) {
             zoom = 12;
         }
 
