@@ -1,4 +1,4 @@
-<?php const WP_VERSION = 0.013; ?>
+<?php const WP_VERSION = 0.014; ?>
 
 <!DOCTYPE html>
 <html lang="eng">
@@ -29,8 +29,16 @@
 <body>
 
 <!-- Map Column -->
-<div class="column _75 map_container">
+<div class="column _75 map_container" style="position:relative;">
     <div class="map" id="map"></div>
+    <div id="not_flying" style="background-color: rgba(0, 0, 0, 0.45);backdrop-filter: blur(5px);-webkit-backdrop-filter: blur(5px);height:100%;width:100%;position:absolute;top:0;left:0;display:flex;justify-content: center;align-items: center;flex-direction: column;">
+        <img src="./assets/img/philly_square.png" style="max-height:40%;height:400px;" />
+
+        <div style="height:20px;"></div>
+
+        <span style="font-size:45px;font-weight:bold;font-family:'Varela Round', sans-serif;">Where's Philly?</span>
+        Check back for his next scheduled flight!
+    </div>
 </div>
 
 <!-- Info Column -->

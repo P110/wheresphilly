@@ -75,6 +75,7 @@ function check_refresh(fade = true){
 function draw_active_sector(sector) {
     if(sector === null) {
         $("#active_sector").slideUp();
+        $("#not_flying").fadeIn(1000);
         if (map_marker !== null) {
             map_marker.remove();
             map_marker = null;
@@ -273,6 +274,7 @@ function draw_active_sector(sector) {
 
     $("#active_sector").html(card_html);
     $("#active_sector").slideDown();
+    $("#not_flying").fadeOut(1000);
 }
 
 
