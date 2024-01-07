@@ -85,7 +85,7 @@ function draw_active_sector(sector) {
         return;
     }
 
-    if (sector['track'].length > 0) {
+    if (sector['track'] !== null && sector['track'].length > 0) {
 
         // Create the track
         let coordinates = [];
