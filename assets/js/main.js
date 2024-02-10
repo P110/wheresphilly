@@ -204,7 +204,7 @@ function draw_active_sector(sector) {
     let altitude = "0";
     let speed = "0";
     let heading = "???";
-    if (sector['track'].length > 0) {
+    if (sector['track'] !== null && sector['track'].length > 0) {
         altitude = sector['track'].slice(-1)[0]['alt'] * 100;
         speed = sector['track'].slice(-1)[0]['gs'];
         heading = sector['info']['heading'];
